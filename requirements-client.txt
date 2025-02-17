@@ -1,0 +1,17 @@
+requests
+socketio
+pyautogui
+psutil
+opencv-python
+pyttsx3
+pillow
+cryptography
+pywin32
+sqlite3
+shutil
+base64
+json
+threading
+subprocess
+ctypes
+platform

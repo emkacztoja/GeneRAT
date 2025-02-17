@@ -1,0 +1,7 @@
+flask
+flask-login
+flask-socketio
+werkzeug
+requests
+uuid
+python-dotenv
