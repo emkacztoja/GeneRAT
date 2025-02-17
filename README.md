@@ -59,17 +59,18 @@ VPS_URL = "http://YOUR_VPS_URL:5000"
 
 1. Start the server (`server.py`).
 2. Deploy the client (`main.py`) on the target device.
-3. Use the web dashboard (`index.html`) to interact with the connected clients.
+3. Use the web dashboard (`templates/index.html`) to interact with the connected clients.
 
 ## 📂 File Structure
 
 ```
 /
-├── server.py      # Flask-based backend
-├── main.py        # Client-side script (Python agent)
-├── index.html     # Web-based UI for controlling devices
-├── styles.css     # (If applicable) UI styling
-└── README.md      # Documentation
+├── server.py        # Flask-based backend
+├── main.py          # Client-side script (Python agent)
+├── templates/
+│   ├── index.html   # Web-based UI for controlling devices
+├── styles.css       # (If applicable) UI styling
+└── README.md        # Documentation
 ```
 
 ## 🛑 Legal & Ethical Considerations
