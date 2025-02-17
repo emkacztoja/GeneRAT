@@ -52,7 +52,7 @@ GeneRAT is a Remote Administration Tool (RAT) that allows users to interact with
 Modify `main.py` to change the `VPS_URL` variable to point to your server:
 
 ```python
-VPS_URL = "http://your-server-ip:5000"
+VPS_URL = "http://YOUR_VPS_URL:5000"
 ```
 
 ## 📜 Usage
@@ -78,7 +78,7 @@ GeneRAT should only be used on devices you own or have explicit permission to co
 
 ## 👤 Author
 
-Developed by **[Your Name]**
+Developed by **emkacztoja**
 
 ## 📄 License
 
