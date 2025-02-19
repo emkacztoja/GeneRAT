@@ -8,7 +8,7 @@ from datetime import datetime, timedelta
 from flask_socketio import SocketIO, emit
 
 app = Flask(__name__)
-app.secret_key = "STRONG_SECRET_KEY"  # Replace with a strong secret key
+app.secret_key = "YOUR_STRONG_SECRET_KEY"  # Replace with a strong secret key
 socketio = SocketIO(app, cors_allowed_origins="*")
 
 DISCONNECT_THRESHOLD = timedelta(seconds=10)  # Time after which a device is considered disconnected
@@ -30,7 +30,7 @@ os.makedirs(IMAGE_FOLDER, exist_ok=True)
 
 # User storage (replace with a database in production)
 users = {
-    "username": generate_password_hash("passowrd"),
+    "username": generate_password_hash("password"),
 }
 
 class User(UserMixin):

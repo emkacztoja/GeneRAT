@@ -268,3 +268,51 @@ a:hover {
   height: auto;
   border-radius: 0 0 8px 8px;
 }
+
+/* Keylogger specific styles */
+.keylogger-controls, .clipboard-controls {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.keylogger-status {
+  padding: 10px;
+  background: #000000;
+  border-radius: 4px;
+}
+
+.clipboard-list {
+  max-height: 200px;
+  overflow-y: auto;
+  background: #fff;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.clipboard-entry {
+  padding: 8px;
+  margin: 5px 0;
+  background: #000000;
+  border-left: 3px solid #007bff;
+}
+
+.transfer-section {
+  margin: 15px 0;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.transfer-section h3 {
+  margin-top: 0;
+}
+
+#dir_tree pre {
+  background: #f8f8f8;
+  padding: 10px;
+  border-radius: 4px;
+  max-height: 400px;
+  overflow: auto;
+}

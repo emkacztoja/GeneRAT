@@ -1,65 +1,84 @@
-# GeneRAT
-
-## ⚠️ Disclaimer
-
-This software is intended for educational and ethical use only. Unauthorized access to computer systems without proper consent is illegal. The developer is not responsible for any misuse of this tool.
+# GeneRAT - Remote Administration Tool
 
 ![Dashboard](dashboard.png)
 
+## ⚠️ Disclaimer
+
+**This software is intended for educational and ethical use only.** Unauthorized access to computer systems without proper consent is illegal. The developer is not responsible for any misuse of this tool.
+
+---
+
 ## 📌 Overview
 
-GeneRAT is a Remote Administration Tool (RAT) that allows users to interact with remote devices via a Flask-based server and a Python client. The server provides a web-based dashboard to execute commands on connected devices, capture screenshots, stream live screens, collect system information, and more.
+GeneRAT is a powerful Remote Administration Tool (RAT) designed to facilitate remote system management through a **Flask-based server** and a **Python client**. It provides a **web-based dashboard** to execute commands, monitor activity, and retrieve system information seamlessly.
+
+🔹 **Cross-platform** (Windows, Linux, MacOS)  
+🔹 **Lightweight & efficient**  
+🔹 **User-friendly web interface**  
+
+---
 
 ## 🚀 Features
 
-- **Remote Shell Execution**: Run shell commands on remote devices.
-- **Live Screen Streaming**: View real-time screenshots from the remote system.
-- **File Management**: Upload and download files.
-- **Webcam Capture**: Take pictures using the remote system's webcam.
-- **Key Input Simulation**: Send keystrokes to the remote machine.
-- **Mouse Control**: Move the mouse cursor remotely.
-- **IP and System Info**: Fetch system details and public IP address.
-- **Discord Token & Chrome Data Grabber**: Retrieve stored browser data and Discord tokens.
-- **CMD Spammer**: Open multiple CMD windows on the remote system.
+✅ **Remote Chat** – Send and receive messages.  
+✅ **Retrieve IP Info** – Get public and local IP addresses.  
+✅ **List Directory** – View remote files and folders.  
+✅ **Mouse Control** – Remotely move the cursor.  
+✅ **Take Screenshot** – Capture the screen in real-time.  
+✅ **Capture Webcam** – Snap pictures using the webcam.  
+✅ **Open Website** – Launch URLs on the remote device.  
+✅ **Send Keystrokes** – Simulate keystrokes remotely.  
+✅ **Show Popup** – Display alert messages.  
+✅ **Text-to-Speech** – Convert text to speech.  
+✅ **Retrieve System Info** – Get OS, hardware, and network details.  
+✅ **File Transfer** – Upload and download files.  
+✅ **Execute Shell Command** – Run commands remotely.  
+✅ **Start/Stop Live Stream** – Monitor the remote screen in real time.  
+✅ **Keylogger** – Log keystrokes in the background.  
+✅ **Clipboard Monitor** – Read clipboard contents.  
+✅ **Directory Tree** – Generate a visual directory structure.  
+✅ **Discord & Chrome Data Grabber** – Extract stored tokens, passwords, and cookies.  
+✅ **CMD Spammer** – Flood the screen with multiple CMD windows.  
+
+---
 
 ## 🛠️ Installation
 
-### Server Setup (Flask Backend)
+### 🔹 Server Setup (Flask Backend)
 
-1. Install dependencies:
-   ```sh
-   pip install flask flask-login flask-socketio werkzeug requests
-   ```
-2. Run the server:
-   ```sh
-   python server.py
-   ```
-3. Access the web panel at `http://localhost:5000`.
+```sh
+pip install -r requirements-server.txt
+python server.py
+```
 
-### Client Setup (Python Agent)
+Access the web panel at: [http://localhost:5000](http://localhost:5000)
 
-1. Install dependencies:
-   ```sh
-   pip install requests socketio pyautogui psutil opencv-python pyttsx3
-   ```
-2. Run the client script:
-   ```sh
-   python main.py
-   ```
+### 🔹 Client Setup (Python Agent)
+
+```sh
+pip install -r requirements-client.txt
+python main.py
+```
+
+---
 
 ## 🔧 Configuration
 
-Modify `main.py` to change the `VPS_URL` variable to point to your server:
+Modify **main.py** to update the **VPS_URL** variable:
 
 ```python
 VPS_URL = "http://YOUR_VPS_URL:5000"
 ```
 
+---
+
 ## 📜 Usage
 
-1. Start the server (`server.py`).
-2. Deploy the client (`main.py`) on the target device.
-3. Use the web dashboard (`templates/index.html`) to interact with the connected clients.
+1. **Start the Server** – Run `server.py` on the host machine.
+2. **Deploy the Client** – Execute `main.py` on the target system.
+3. **Control via Web Dashboard** – Use `templates/index.html` to interact with connected devices.
+
+---
 
 ## 📂 File Structure
 
@@ -73,15 +92,25 @@ VPS_URL = "http://YOUR_VPS_URL:5000"
 └── README.md        # Documentation
 ```
 
+---
+
 ## 🛑 Legal & Ethical Considerations
 
-GeneRAT should only be used on devices you own or have explicit permission to control. Unauthorized access to computer systems is illegal and punishable by law.
+**GeneRAT should only be used on devices you own or have explicit permission to control.** Unauthorized access is a criminal offense punishable by law.
+
+---
 
 ## 👤 Author
 
 Developed by **emkacztoja**
 
+---
+
 ## 📄 License
 
 This project is released under the **MIT License**.
+
+---
+
+🚀 **Happy Coding & Ethical Hacking!**
 
